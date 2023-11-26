@@ -1,0 +1,80 @@
+version 1
+This is a C++ header file.
+Error messages, etc. are in Japanese. Please translate if necessary.
+
+
+
+
+
+
+
+#pragma once
+#include <iostream>
+#include <string>
+#include <windows.h>
+
+
+// グローバル変数
+HINSTANCE hInst;
+HWND hWnd;
+HWND hButton;
+
+namespace wg {
+//--------------------------------------------------------------------------------------------------
+
+
+// ウィンドウプロシージャ
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+switch (message) {
+case WM_DESTROY:
+PostQuitMessage(0);
+break;
+default:
+return DefWindowProc(hWnd, message, wParam, lParam);
+}
+return 0;
+}
+
+// ウィンドウ生成
+HWND CW(std::string id, std::string name, int width, int height, DWORD_PTR style = WS_OVERLAPPEDWINDOW) {
+WNDCLASS wc = {};
+wc.lpfnWndProc = WndProc;
+wc.hInstance = hInst;
+wc.lpszClassName = id.c_str();
+
+if (!RegisterClass(&wc)) {
+std::cerr << "WindowsGUI(ERROR): ウィンドウクラスの登録に失敗\n";
+return nullptr;
+}
+
+HWND hWnd = ::CreateWindow(
+id.c_str(), name.c_str(), style,
+CW_USEDEFAULT, CW_USEDEFAULT, width, height,
+nullptr, nullptr, hInst, nullptr);
+
+if (!hWnd) {
+std::cerr << "WindowsGUI(ERROR): ウィンドウの作成に失敗\n";
+// ウィンドウが作成できなかった場合、ウィンドウクラスを解除
+UnregisterClass(id.c_str(), hInst);
+return nullptr;
+}
+
+return hWnd;
+}
+
+// ウィンドウ表示
+void ShowWindow(HWND hWnd) {
+::ShowWindow(hWnd, SW_SHOWNORMAL);
+::UpdateWindow(hWnd);
+
+MSG msg = {};
+while (GetMessage(&msg, nullptr, 0, 0)) {
+TranslateMessage(&msg);
+DispatchMessage(&msg);
+
+// メッセージが WM_QUIT だった場合、メッセージループを終了
+if (msg.message == WM_QUIT) {
+break;
+}
+}
+}
